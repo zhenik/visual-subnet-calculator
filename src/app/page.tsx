@@ -22,7 +22,7 @@ export default function Home() {
         setShowColumns({ ...showColumns, [column]: !showColumns[column] });
     };
 
-    const [subnets, setSubnets] = useState<{ subnet: string; netmask: string; range: string; useableIPs: string; hosts: number }[]>([]);
+    const [subnets, setSubnets] = useState<{ subnet: string; netmask: string; range: string; useableIPs: string; hosts: number; cidr: string }[]>([]);
 
     // Function to calculate subnets
     const calculateSubnet = () => {
@@ -42,6 +42,7 @@ export default function Home() {
                 range: `${ip.startAddress().correctForm()} - ${ip.endAddress().correctForm()}`,
                 useableIPs: `${Address4.fromBigInt(firstUsableIP).correctForm()} - ${Address4.fromBigInt(lastUsableIP).correctForm()}`,
                 hosts: totalHosts,
+                cidr: ip.correctForm() + "/" + mask, // Add cidr property
             };
 
             setSubnets([{ ...newSubnet }]); // Update state with a single subnet
@@ -88,7 +89,6 @@ export default function Home() {
                 ))}
             </Box>
 
-            {/* Subnet Table Component */}
             <SubnetTable subnets={subnets} showColumns={showColumns} />
         </Container>
     );
