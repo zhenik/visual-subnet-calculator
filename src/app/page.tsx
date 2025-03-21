@@ -3,7 +3,10 @@ import React, { useState } from "react";
 import { Checkbox, FormControlLabel, Typography, Container, Box } from "@mui/material";
 import { Address4 } from "ip-address";
 import SubnetTable from "@/components/SubnetTable";
-import SubnetInput from "@/components/SubnetInput"; // ✅ Import SubnetInput
+import SubnetInput from "@/components/SubnetInput";
+import {useDispatch, useSelector} from "react-redux";
+import {RootState} from "@/store/store";
+import {setSubnets} from "@/store/subnetSlice"; // ✅ Import SubnetInput
 
 export default function Home() {
     const [network, setNetwork] = useState("192.168.0.0");
@@ -17,7 +20,8 @@ export default function Home() {
         divide: true,
         join: true,
     });
-    const [subnets, setSubnets] = useState<{ subnet: string; netmask: string; range: string; useableIPs: string; hosts: number; cidr: string }[]>([]);
+    const subnets = useSelector((state: RootState) => state.subnets.subnets);
+    const dispatch = useDispatch();
 
     // Toggle visibility of table columns
     const toggleColumn = (column: keyof typeof showColumns) => {
@@ -41,7 +45,7 @@ export default function Home() {
                 cidr: ip.correctForm() + "/" + mask,
             };
 
-            setSubnets([{ ...newSubnet }]); // Update with the single calculated subnet
+            dispatch(setSubnets([newSubnet]));
         } catch (error) {
             console.error("Invalid IP address or mask", error);
             alert("Invalid network or subnet mask.");

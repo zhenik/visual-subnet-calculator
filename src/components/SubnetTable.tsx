@@ -64,7 +64,7 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
         const newSubnets = [...subnets];
         newSubnets.splice(index, 1, calculateSubnetDetails(subnet1), calculateSubnetDetails(subnet2));
 
-        dispatch(setSubnets(newSubnets));
+        dispatch(setSubnets([...newSubnets]));
     };
 
     // **Join Subnets**
@@ -104,7 +104,7 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
             const newSubnets = [...subnets];
             newSubnets.splice(index, 2, calculateSubnetDetails(mergedSubnet));
 
-            dispatch(setSubnets(newSubnets));
+            dispatch(setSubnets([...newSubnets]));
         }
     };
 

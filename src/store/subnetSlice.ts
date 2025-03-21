@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface Subnet {
     cidr: string;
-    netmask: string; // Keep as a string for display
+    netmask: string;
     range: string;
     useableIPs: string;
     hosts: number;
@@ -20,18 +20,17 @@ const subnetSlice = createSlice({
     name: "subnets",
     initialState,
     reducers: {
+        setSubnets: (state, action: PayloadAction<Subnet[]>) => {
+            state.subnets = action.payload;
+        },
         addSubnet: (state, action: PayloadAction<Subnet>) => {
             state.subnets.push(action.payload);
         },
         removeSubnet: (state, action: PayloadAction<string>) => {
             state.subnets = state.subnets.filter((s) => s.cidr !== action.payload);
         },
-        setSubnets: (state, action: PayloadAction<Subnet[]>) => {
-            state.subnets = action.payload; // Completely replaces subnets array
-        },
     },
 });
 
-export const { addSubnet, removeSubnet, setSubnets } = subnetSlice.actions;
+export const { setSubnets, addSubnet, removeSubnet } = subnetSlice.actions;
 export default subnetSlice.reducer;
-
