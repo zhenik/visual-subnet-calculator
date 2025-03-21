@@ -1,41 +1,44 @@
 "use client";
 
-import React, { useState } from "react";
-import { useDispatch } from "react-redux";
-import { addSubnet } from "@/store/subnetSlice";
+import React from "react";
 import { TextField, Button, Box } from "@mui/material";
 
-const SubnetInput: React.FC = () => {
-    const [cidr, setCidr] = useState("");
-    const [name, setName] = useState("");
-    const dispatch = useDispatch();
+interface SubnetInputProps {
+    network: string;
+    mask: number;
+    setNetwork: (value: string) => void;
+    setMask: (value: number) => void;
+    onCalculate: () => void;
+    onReset: () => void;
+}
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!cidr) return;
-        dispatch(addSubnet({ cidr, name: name || "Unnamed Subnet" }));
-        setCidr("");
-        setName("");
-    };
-
+const SubnetInput: React.FC<SubnetInputProps> = ({ network, mask, setNetwork, setMask, onCalculate, onReset }) => {
     return (
-        <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", gap: 2, mt: 2 }}>
+        <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+            {/* Network Address Input */}
             <TextField
-                label="CIDR (e.g., 10.100.8.0/25)"
+                label="Network Address"
                 variant="outlined"
                 size="small"
-                value={cidr}
-                onChange={(e) => setCidr(e.target.value)}
+                value={network}
+                onChange={(e) => setNetwork(e.target.value)}
             />
+            {/* Mask Bits Input */}
             <TextField
-                label="Subnet Name"
+                label="Mask bits"
+                type="number"
                 variant="outlined"
                 size="small"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={mask}
+                onChange={(e) => setMask(Number(e.target.value))}
             />
-            <Button type="submit" variant="contained" color="primary">
-                Add Subnet
+            {/* Update Button */}
+            <Button variant="contained" onClick={onCalculate}>
+                Update
+            </Button>
+            {/* Reset Button */}
+            <Button variant="outlined" color="secondary" onClick={onReset}>
+                Reset
             </Button>
         </Box>
     );

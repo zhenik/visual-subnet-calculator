@@ -1,9 +1,9 @@
 "use client";
-
 import React, { useState } from "react";
-import { TextField, Button, Checkbox, FormControlLabel, Typography, Container, Box } from "@mui/material";
+import { Checkbox, FormControlLabel, Typography, Container, Box } from "@mui/material";
 import { Address4 } from "ip-address";
-import SubnetTable from "@/components/SubnetTable"; // ✅ Import SubnetTable
+import SubnetTable from "@/components/SubnetTable";
+import SubnetInput from "@/components/SubnetInput"; // ✅ Import SubnetInput
 
 export default function Home() {
     const [network, setNetwork] = useState("192.168.0.0");
@@ -17,23 +17,19 @@ export default function Home() {
         divide: true,
         join: true,
     });
+    const [subnets, setSubnets] = useState<{ subnet: string; netmask: string; range: string; useableIPs: string; hosts: number; cidr: string }[]>([]);
 
+    // Toggle visibility of table columns
     const toggleColumn = (column: keyof typeof showColumns) => {
         setShowColumns({ ...showColumns, [column]: !showColumns[column] });
     };
 
-    const [subnets, setSubnets] = useState<{ subnet: string; netmask: string; range: string; useableIPs: string; hosts: number; cidr: string }[]>([]);
-
-    // Function to calculate subnets
+    // Calculate subnets
     const calculateSubnet = () => {
         try {
             const ip = new Address4(`${network}/${mask}`);
-
-            // First and last usable IPs (excluding network & broadcast addresses)
             const firstUsableIP = ip.startAddress().bigInt() + BigInt(1);
             const lastUsableIP = ip.endAddress().bigInt() - BigInt(1);
-
-            // Compute total hosts (including network and broadcast addresses)
             const totalHosts = Number(ip.endAddress().bigInt() - ip.startAddress().bigInt()) + 1;
 
             const newSubnet = {
@@ -42,10 +38,10 @@ export default function Home() {
                 range: `${ip.startAddress().correctForm()} - ${ip.endAddress().correctForm()}`,
                 useableIPs: `${Address4.fromBigInt(firstUsableIP).correctForm()} - ${Address4.fromBigInt(lastUsableIP).correctForm()}`,
                 hosts: totalHosts,
-                cidr: ip.correctForm() + "/" + mask, // Add cidr property
+                cidr: ip.correctForm() + "/" + mask,
             };
 
-            setSubnets([{ ...newSubnet }]); // Update state with a single subnet
+            setSubnets([{ ...newSubnet }]); // Update with the single calculated subnet
         } catch (error) {
             console.error("Invalid IP address or mask", error);
             alert("Invalid network or subnet mask.");
@@ -65,13 +61,15 @@ export default function Home() {
                 Visual Subnet Calculator
             </Typography>
 
-            {/* Input Fields */}
-            <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-                <TextField label="Network Address" variant="outlined" size="small" value={network} onChange={(e) => setNetwork(e.target.value)} />
-                <TextField label="Mask bits" type="number" variant="outlined" size="small" value={mask} onChange={(e) => setMask(Number(e.target.value))} />
-                <Button variant="contained" onClick={calculateSubnet}>Update</Button>
-                <Button variant="outlined" color="secondary" onClick={handleReset}>Reset</Button>
-            </Box>
+            {/* Subnet Input Component */}
+            <SubnetInput
+                network={network}
+                mask={mask}
+                setNetwork={setNetwork}
+                setMask={setMask}
+                onCalculate={calculateSubnet}
+                onReset={handleReset}
+            />
 
             {/* Column Visibility Checkboxes */}
             <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
@@ -89,6 +87,7 @@ export default function Home() {
                 ))}
             </Box>
 
+            {/* Subnet Table */}
             <SubnetTable subnets={subnets} showColumns={showColumns} />
         </Container>
     );
