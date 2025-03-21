@@ -109,35 +109,43 @@ export default function Home() {
         setSubnets(newSubnets);
     };
 
-
     const joinSubnets = (index: number) => {
-        // if (index < subnets.length - 1) {
-        //     const subnet1 = new Address4(subnets[index].subnet);
-        //     const subnet2 = new Address4(subnets[index + 1].subnet);
-        //
-        //     // Ensure they are adjacent and have the same mask
-        //     const nextSubnetStart = subnet1.endAddress().bigInt() + BigInt(1); // Compute next subnet's first address
-        //     if (subnet1.subnetMask !== subnet2.subnetMask || Address4.fromBigInt(nextSubnetStart).correctForm() !== subnet2.startAddress().correctForm()) {
-        //         alert("These subnets cannot be joined.");
-        //         return;
-        //     }
-        //
-        //     // Reduce mask by 1 to merge
-        //     const newMask: number = subnet1.subnetMask - 1;
-        //     const mergedSubnet = new Address4(`${subnet1.startAddress().correctForm()}/${newMask}`);
-        //
-        //     const newSubnets = [...subnets];
-        //     newSubnets.splice(index, 2,
-        //         {
-        //             subnet: mergedSubnet.correctForm(),
-        //             range: `${mergedSubnet.startAddress().correctForm()} - ${mergedSubnet.endAddress().correctForm()}`,
-        //             useableIPs: `${mergedSubnet.startAddress().address} - ${mergedSubnet.endAddress().address}`,
-        //             hosts: Number(mergedSubnet.endAddress().bigInt() - mergedSubnet.startAddress().bigInt()) - 1,
-        //         }
-        //     );
-        //
-        //     setSubnets(newSubnets);
-        // }
+        if (index < subnets.length - 1) {
+            const subnet1 = new Address4(subnets[index].subnet);
+            const subnet2 = new Address4(subnets[index + 1].subnet);
+
+            // Ensure they are adjacent and have the same mask
+            const nextSubnetStart = subnet1.endAddress().bigInt() + BigInt(1);
+            if (
+                subnet1.subnetMask !== subnet2.subnetMask ||
+                Address4.fromBigInt(nextSubnetStart).correctForm() !== subnet2.startAddress().correctForm()
+            ) {
+                alert("These subnets cannot be joined.");
+                return;
+            }
+
+            // Reduce mask by 1 to merge
+            const newMask: number = subnet1.subnetMask - 1;
+            const mergedSubnet = new Address4(`${subnet1.startAddress().correctForm()}/${newMask}`);
+
+            const calculateSubnetDetails = (subnetObj: Address4) => {
+                const firstUsableIP = subnetObj.startAddress().bigInt() + BigInt(1);
+                const lastUsableIP = subnetObj.endAddress().bigInt() - BigInt(1);
+                const totalHosts = Number(subnetObj.endAddress().bigInt() - subnetObj.startAddress().bigInt()) + 1;
+
+                return {
+                    subnet: subnetObj.correctForm() + "/" + subnetObj.subnetMask,
+                    range: `${subnetObj.startAddress().correctForm()} - ${subnetObj.endAddress().correctForm()}`,
+                    useableIPs: `${Address4.fromBigInt(firstUsableIP).correctForm()} - ${Address4.fromBigInt(lastUsableIP).correctForm()}`,
+                    hosts: totalHosts,
+                };
+            };
+
+            const newSubnets = [...subnets];
+            newSubnets.splice(index, 2, calculateSubnetDetails(mergedSubnet));
+
+            setSubnets(newSubnets);
+        }
     };
 
 
