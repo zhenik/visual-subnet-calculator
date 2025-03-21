@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
-import { addSubnet } from "../store/subnetSlice";
+import { addSubnet } from "@/store/subnetSlice";
 import { TextField, Button, Box } from "@mui/material";
 
 const SubnetInput: React.FC = () => {

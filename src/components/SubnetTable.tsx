@@ -2,8 +2,8 @@
 
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { RootState } from "../store/store";
-import { removeSubnet } from "../store/subnetSlice";
+import { RootState } from "@/store/store";
+import { removeSubnet } from "@/store/subnetSlice";
 import { Table, TableHead, TableRow, TableCell, TableBody, Button } from "@mui/material";
 
 const SubnetTable: React.FC = () => {
