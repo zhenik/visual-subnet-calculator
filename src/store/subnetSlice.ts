@@ -1,8 +1,11 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-interface Subnet {
+export interface Subnet {
     cidr: string;
-    name: string;
+    netmask: string;  // Add this line
+    range: string;
+    useableIPs: string;
+    hosts: number;
 }
 
 interface SubnetState {
