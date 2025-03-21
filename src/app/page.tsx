@@ -29,18 +29,18 @@ export default function Home() {
         try {
             const ip = new Address4(`${network}/${mask}`);
 
-            // First and last usable IPs
-            const firstUsableIP = ip.startAddress().address;
-            const lastUsableIP = ip.endAddress().address;
+            // First and last usable IPs (excluding network & broadcast addresses)
+            const firstUsableIP = ip.startAddress().bigInt() + BigInt(1);
+            const lastUsableIP = ip.endAddress().bigInt() - BigInt(1);
 
-            // Compute the number of usable hosts
-            const totalHosts = Number(ip.endAddress().bigInt() - ip.startAddress().bigInt()) - 1;
+            // Compute total hosts (including network and broadcast addresses)
+            const totalHosts = Number(ip.endAddress().bigInt() - ip.startAddress().bigInt()) + 1;
 
             const newSubnet = {
                 subnet: ip.correctForm() + "/" + ip.subnetMask,
                 netmask: ip.subnetMask,
                 range: `${ip.startAddress().correctForm()} - ${ip.endAddress().correctForm()}`,
-                useableIPs: `${firstUsableIP} - ${lastUsableIP}`,
+                useableIPs: `${Address4.fromBigInt(firstUsableIP).correctForm()} - ${Address4.fromBigInt(lastUsableIP).correctForm()}`,
                 hosts: totalHosts,
             };
 
@@ -90,21 +90,22 @@ export default function Home() {
         const nextSubnetIp = Address4.fromBigInt(nextSubnetStart); // Convert BigInt to Address4
         const subnet2 = new Address4(`${nextSubnetIp.correctForm()}/${newMask}`);
 
+        const calculateSubnetDetails = (subnetObj: Address4) => {
+            const firstUsableIP = subnetObj.startAddress().bigInt() + BigInt(1);
+            const lastUsableIP = subnetObj.endAddress().bigInt() - BigInt(1);
+            const totalHosts = Number(subnetObj.endAddress().bigInt() - subnetObj.startAddress().bigInt()) + 1;
+
+            return {
+                subnet: subnetObj.correctForm() + "/" + subnetObj.subnetMask,
+                range: `${subnetObj.startAddress().correctForm()} - ${subnetObj.endAddress().correctForm()}`,
+                useableIPs: `${Address4.fromBigInt(firstUsableIP).correctForm()} - ${Address4.fromBigInt(lastUsableIP).correctForm()}`,
+                hosts: totalHosts,
+            };
+        };
+
         const newSubnets = [...subnets];
-        newSubnets.splice(index, 1,
-            {
-                subnet: subnet1.correctForm() + "/" + subnet1.subnetMask,
-                range: `${subnet1.startAddress().correctForm()} - ${subnet1.endAddress().correctForm()}`,
-                useableIPs: `${subnet1.startAddress().address} - ${subnet1.endAddress().address}`,
-                hosts: Number(subnet1.endAddress().bigInt() - subnet1.startAddress().bigInt()) - 1,
-            },
-            {
-                subnet: subnet2.correctForm() + "/" + subnet2.subnetMask,
-                range: `${subnet2.startAddress().correctForm()} - ${subnet2.endAddress().correctForm()}`,
-                useableIPs: `${subnet2.startAddress().address} - ${subnet2.endAddress().address}`,
-                hosts: Number(subnet2.endAddress().bigInt() - subnet2.startAddress().bigInt()) - 1,
-            }
-        );
+        newSubnets.splice(index, 1, calculateSubnetDetails(subnet1), calculateSubnetDetails(subnet2));
+
         setSubnets(newSubnets);
     };
 
