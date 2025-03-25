@@ -27,15 +27,12 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
 
     const [editedDescriptions, setEditedDescriptions] = useState<{ [index: number]: string }>({});
     const handleDescriptionChange = (index: number, value: string) => {
-        setEditedDescriptions({ ...editedDescriptions, [index]: value });
-    };
+        setEditedDescriptions(prev => ({ ...prev, [index]: value }));
 
-    const handleDescriptionBlur = (index: number) => {
-        const description = editedDescriptions[index] ?? "";
         const newSubnets = [...subnets];
         newSubnets[index] = {
             ...newSubnets[index],
-            description,
+            description: value,
         };
         dispatch(setSubnets(newSubnets));
     };
@@ -154,7 +151,6 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
                                     variant="standard"
                                     value={editedDescriptions[index] ?? subnet.description ?? ""}
                                     onChange={(e) => handleDescriptionChange(index, e.target.value)}
-                                    onBlur={() => handleDescriptionBlur(index)}
                                     fullWidth
                                 />
                             </TableCell>
