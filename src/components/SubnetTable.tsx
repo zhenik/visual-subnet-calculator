@@ -16,6 +16,7 @@ interface SubnetTableProps {
         range: boolean;
         useableIPs: boolean;
         hosts: boolean;
+        description: boolean;
         divide: boolean;
         join: boolean;
     };
@@ -58,6 +59,7 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
                 range: `${subnetObj.startAddress().correctForm()} - ${subnetObj.endAddress().correctForm()}`,
                 useableIPs: `${Address4.fromBigInt(firstUsableIP).correctForm()} - ${Address4.fromBigInt(lastUsableIP).correctForm()}`,
                 hosts: totalHosts,
+                description: "Auto-generated subnet",
             };
         };
 
@@ -98,6 +100,7 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
                     range: `${subnetObj.startAddress().correctForm()} - ${subnetObj.endAddress().correctForm()}`,
                     useableIPs: `${Address4.fromBigInt(firstUsableIP).correctForm()} - ${Address4.fromBigInt(lastUsableIP).correctForm()}`,
                     hosts: totalHosts,
+                    description: `Auto-generated subnet`,
                 };
             };
 
@@ -117,6 +120,7 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
                     {showColumns.range && <TableCell><strong>Range of Addresses</strong></TableCell>}
                     {showColumns.useableIPs && <TableCell><strong>Usable IPs</strong></TableCell>}
                     {showColumns.hosts && <TableCell><strong>Hosts</strong></TableCell>}
+                    {showColumns.description && <TableCell><strong>Description</strong></TableCell>}
                     {showColumns.divide && <TableCell><strong>Divide</strong></TableCell>}
                     {showColumns.join && <TableCell><strong>Join</strong></TableCell>}
                 </TableRow>
@@ -129,6 +133,7 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
                         {showColumns.range && <TableCell>{subnet.range}</TableCell>}
                         {showColumns.useableIPs && <TableCell>{subnet.useableIPs}</TableCell>}
                         {showColumns.hosts && <TableCell>{subnet.hosts}</TableCell>}
+                        {showColumns.description && <TableCell>{subnet.description}</TableCell>}
                         {showColumns.divide && (
                             <TableCell>
                                 <Button color="primary" onClick={() => divideSubnet(index)}>
