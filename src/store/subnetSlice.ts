@@ -7,6 +7,7 @@ export interface Subnet {
     useableIPs: string;
     hosts: number;
     description?: string;
+    color?: string; // ✅ new field
 }
 
 interface SubnetState {
