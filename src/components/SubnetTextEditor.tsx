@@ -14,7 +14,8 @@ const SubnetsTextEditor: React.FC = () => {
 
     // Sync Redux state to editor
     useEffect(() => {
-        setText(JSON.stringify(subnets, null, 2));
+        const reduced = subnets.map(({ cidr, description }) => ({ cidr, description }));
+        setText(JSON.stringify(reduced, null, 2));
     }, [subnets]);
 
     // Sync editor changes back to Redux
@@ -23,7 +24,12 @@ const SubnetsTextEditor: React.FC = () => {
         try {
             const parsed = JSON.parse(value);
             if (Array.isArray(parsed)) {
-                dispatch(setSubnets(parsed));
+                const updatedSubnets = subnets.map((subnet, i) => ({
+                    ...subnet,
+                    cidr: parsed[i]?.cidr ?? subnet.cidr,
+                    description: parsed[i]?.description ?? subnet.description,
+                }));
+                dispatch(setSubnets(updatedSubnets));
                 setError(false);
             }
         } catch (err) {
@@ -34,10 +40,10 @@ const SubnetsTextEditor: React.FC = () => {
     return (
         <Box sx={{ width: "100%" }}>
             <Typography variant="h6" gutterBottom>
-                Subnet JSON Editor
+                Subnet CIDR & Description Editor
             </Typography>
             <TextField
-                label="Subnets JSON"
+                label="Subnets (CIDR & Description only)"
                 multiline
                 rows={20}
                 fullWidth
@@ -47,7 +53,7 @@ const SubnetsTextEditor: React.FC = () => {
             />
             <Snackbar
                 open={error}
-                autoHideDuration={1500} // 1.5 seconds
+                autoHideDuration={1500}
                 onClose={() => setError(false)}
                 anchorOrigin={{ vertical: "top", horizontal: "center" }}
             >
