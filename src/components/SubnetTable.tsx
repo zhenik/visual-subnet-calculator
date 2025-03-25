@@ -1,9 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/store/store";
-import { Table, TableHead, TableRow, TableCell, TableBody, Button } from "@mui/material";
+import {Table, TableHead, TableRow, TableCell, TableBody, Button, TextField} from "@mui/material";
 import { Address4 } from "ip-address";
 import { setSubnets, Subnet } from "@/store/subnetSlice";
 
@@ -24,6 +24,21 @@ interface SubnetTableProps {
 
 const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
     const dispatch = useDispatch();
+
+    const [editedDescriptions, setEditedDescriptions] = useState<{ [index: number]: string }>({});
+    const handleDescriptionChange = (index: number, value: string) => {
+        setEditedDescriptions({ ...editedDescriptions, [index]: value });
+    };
+
+    const handleDescriptionBlur = (index: number) => {
+        const description = editedDescriptions[index] ?? "";
+        const newSubnets = [...subnets];
+        newSubnets[index] = {
+            ...newSubnets[index],
+            description,
+        };
+        dispatch(setSubnets(newSubnets));
+    };
 
     // **Divide Subnet**
     const divideSubnet = (index: number) => {
@@ -133,7 +148,17 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
                         {showColumns.range && <TableCell>{subnet.range}</TableCell>}
                         {showColumns.useableIPs && <TableCell>{subnet.useableIPs}</TableCell>}
                         {showColumns.hosts && <TableCell>{subnet.hosts}</TableCell>}
-                        {showColumns.description && <TableCell>{subnet.description}</TableCell>}
+                        {showColumns.description && (
+                            <TableCell>
+                                <TextField
+                                    variant="standard"
+                                    value={editedDescriptions[index] ?? subnet.description ?? ""}
+                                    onChange={(e) => handleDescriptionChange(index, e.target.value)}
+                                    onBlur={() => handleDescriptionBlur(index)}
+                                    fullWidth
+                                />
+                            </TableCell>
+                        )}
                         {showColumns.divide && (
                             <TableCell>
                                 <Button color="primary" onClick={() => divideSubnet(index)}>
