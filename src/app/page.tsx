@@ -17,6 +17,7 @@ export default function Home() {
         range: true,
         useableIPs: true,
         hosts: true,
+        description: true,
         divide: true,
         join: true,
     });

@@ -1,9 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/store/store";
-import { Table, TableHead, TableRow, TableCell, TableBody, Button } from "@mui/material";
+import {Table, TableHead, TableRow, TableCell, TableBody, Button, TextField} from "@mui/material";
 import { Address4 } from "ip-address";
 import { setSubnets, Subnet } from "@/store/subnetSlice";
 
@@ -16,6 +16,7 @@ interface SubnetTableProps {
         range: boolean;
         useableIPs: boolean;
         hosts: boolean;
+        description: boolean;
         divide: boolean;
         join: boolean;
     };
@@ -23,6 +24,18 @@ interface SubnetTableProps {
 
 const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
     const dispatch = useDispatch();
+
+    const [editedDescriptions, setEditedDescriptions] = useState<{ [index: number]: string }>({});
+    const handleDescriptionChange = (index: number, value: string) => {
+        setEditedDescriptions(prev => ({ ...prev, [index]: value }));
+
+        const newSubnets = [...subnets];
+        newSubnets[index] = {
+            ...newSubnets[index],
+            description: value,
+        };
+        dispatch(setSubnets(newSubnets));
+    };
 
     // **Divide Subnet**
     const divideSubnet = (index: number) => {
@@ -58,6 +71,7 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
                 range: `${subnetObj.startAddress().correctForm()} - ${subnetObj.endAddress().correctForm()}`,
                 useableIPs: `${Address4.fromBigInt(firstUsableIP).correctForm()} - ${Address4.fromBigInt(lastUsableIP).correctForm()}`,
                 hosts: totalHosts,
+                description: "Auto-generated subnet",
             };
         };
 
@@ -98,6 +112,7 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
                     range: `${subnetObj.startAddress().correctForm()} - ${subnetObj.endAddress().correctForm()}`,
                     useableIPs: `${Address4.fromBigInt(firstUsableIP).correctForm()} - ${Address4.fromBigInt(lastUsableIP).correctForm()}`,
                     hosts: totalHosts,
+                    description: `Auto-generated subnet`,
                 };
             };
 
@@ -117,6 +132,7 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
                     {showColumns.range && <TableCell><strong>Range of Addresses</strong></TableCell>}
                     {showColumns.useableIPs && <TableCell><strong>Usable IPs</strong></TableCell>}
                     {showColumns.hosts && <TableCell><strong>Hosts</strong></TableCell>}
+                    {showColumns.description && <TableCell><strong>Description</strong></TableCell>}
                     {showColumns.divide && <TableCell><strong>Divide</strong></TableCell>}
                     {showColumns.join && <TableCell><strong>Join</strong></TableCell>}
                 </TableRow>
@@ -129,6 +145,16 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
                         {showColumns.range && <TableCell>{subnet.range}</TableCell>}
                         {showColumns.useableIPs && <TableCell>{subnet.useableIPs}</TableCell>}
                         {showColumns.hosts && <TableCell>{subnet.hosts}</TableCell>}
+                        {showColumns.description && (
+                            <TableCell>
+                                <TextField
+                                    variant="standard"
+                                    value={editedDescriptions[index] ?? subnet.description ?? ""}
+                                    onChange={(e) => handleDescriptionChange(index, e.target.value)}
+                                    fullWidth
+                                />
+                            </TableCell>
+                        )}
                         {showColumns.divide && (
                             <TableCell>
                                 <Button color="primary" onClick={() => divideSubnet(index)}>
