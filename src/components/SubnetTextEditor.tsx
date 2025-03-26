@@ -46,6 +46,7 @@ const SubnetsTextEditor: React.FC = () => {
             const parsed = JSON.parse(text);
             if (Array.isArray(parsed)) {
                 const enriched = parsed.map(enrichSubnet).filter((s): s is Exclude<typeof s, null> => s !== null);
+                dispatch(setSubnets([])); // Reset before update
                 dispatch(setSubnets(enriched));
                 setError(false);
             }
@@ -69,8 +70,7 @@ const SubnetsTextEditor: React.FC = () => {
                 onChange={(e) => setText(e.target.value)}
             />
             <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                <Button variant="contained" onClick={handleUpdate}>Update</Button>
-                <Button variant="outlined" disabled>Import</Button>
+                <Button variant="contained" onClick={handleUpdate}>Import</Button>
             </Stack>
             <Snackbar
                 open={error}
