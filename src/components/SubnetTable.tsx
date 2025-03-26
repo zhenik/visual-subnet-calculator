@@ -82,7 +82,7 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
                 range: `${subnetObj.startAddress().correctForm()} - ${subnetObj.endAddress().correctForm()}`,
                 useableIPs: `${Address4.fromBigInt(firstUsableIP).correctForm()} - ${Address4.fromBigInt(lastUsableIP).correctForm()}`,
                 hosts: totalHosts,
-                description: "Auto-generated subnet",
+                description: "",
             };
         };
 
