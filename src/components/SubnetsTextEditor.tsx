@@ -18,26 +18,34 @@ import { RootState } from "@/store/store";
 import { setSubnets } from "@/store/subnetSlice";
 import { Address4 } from "ip-address";
 
-const SubnetsTextEditor: React.FC = () => {
+interface SubnetsTextEditorProps {
+    setRootNetwork?: (network: string, mask: number) => void;
+}
+
+const SubnetsTextEditor: React.FC<SubnetsTextEditorProps> = ({ setRootNetwork }) => {
     const dispatch = useDispatch();
     const subnets = useSelector((state: RootState) => state.subnets.subnets);
     const [text, setText] = useState("");
     const [error, setError] = useState(false);
     const [format, setFormat] = useState<"json" | "text">("json");
 
-    // Sync Redux state to editor initially
     useEffect(() => {
         if (format === "json") {
-            setText(JSON.stringify(subnets.map(({ cidr, description, color }) => ({ cidr, description, color })), null, 2));
+            setText(
+                JSON.stringify(
+                    subnets.map(({ cidr, description, color }) => ({ cidr, description, color })),
+                    null,
+                    2
+                )
+            );
         } else {
-            const textFormat = subnets
-                .map(({ cidr, description = "", color }) => `${cidr} ${description}${color ? ` ${color}` : ""}`.trim())
-                .join("\n");
-            setText(textFormat);
+            const lines = subnets.map(({ cidr, description, color }) =>
+                `${cidr} ${description || ""}${color ? ` ${color}` : ""}`.trim()
+            );
+            setText(lines.join("\n"));
         }
     }, [subnets, format]);
 
-    // Helper to calculate missing fields from CIDR
     const enrichSubnet = (item: { cidr: string; description?: string; color?: string }) => {
         try {
             const ip = new Address4(item.cidr);
@@ -59,29 +67,53 @@ const SubnetsTextEditor: React.FC = () => {
         }
     };
 
-    // Handle Update click
+    const parseTextFormat = (input: string) => {
+        const lines = input.trim().split("\n");
+        return lines.map((line) => {
+            const [cidr, ...rest] = line.trim().split(/\s+/);
+            const colorMatch = rest[rest.length - 1]?.startsWith("#") ? rest.pop() : undefined;
+            const description = rest.join(" ");
+            return { cidr, description, color: colorMatch };
+        });
+    };
+
+    const findCommonRoot = (cidrs: string[]): { network: string; mask: number } | null => {
+        // todo: Debug
+        try {
+            const ips = cidrs.map((c) => new Address4(c));
+            const base = ips[0];
+            let mask = base.subnetMask;
+
+            for (let i = 1; i < ips.length; i++) {
+                while (!base.isInSubnet(new Address4(`${ips[i].startAddress().correctForm()}/${mask}`))) {
+                    mask--;
+                    if (mask < 0) return null;
+                }
+            }
+
+            return { network: base.startAddress().correctForm(), mask };
+        } catch {
+            return null;
+        }
+    };
+
     const handleUpdate = () => {
         try {
             let parsed: any[] = [];
-
             if (format === "json") {
                 parsed = JSON.parse(text);
             } else {
-                parsed = text
-                    .split("\n")
-                    .map((line) => line.trim())
-                    .filter((line) => line)
-                    .map((line) => {
-                        const parts = line.split(" ");
-                        const cidr = parts[0];
-                        const color = parts.length > 2 && /^#/.test(parts[parts.length - 1]) ? parts.pop() : undefined;
-                        const description = parts.slice(1).join(" ");
-                        return { cidr, description, color };
-                    });
+                parsed = parseTextFormat(text);
             }
 
             if (Array.isArray(parsed)) {
-                dispatch(setSubnets([])); // Reset before update
+                const cidrs = parsed.map((s) => s.cidr);
+                const root = findCommonRoot(cidrs);
+                console.log("Root: " + JSON.stringify(root));
+                if (root && setRootNetwork) {
+                    setRootNetwork(root.network, root.mask);
+                }
+
                 const enriched = parsed.map(enrichSubnet).filter((s): s is Exclude<typeof s, null> => s !== null);
                 dispatch(setSubnets(enriched));
                 setError(false);
@@ -94,7 +126,7 @@ const SubnetsTextEditor: React.FC = () => {
     return (
         <Box sx={{ width: "100%" }}>
             <Typography variant="h6" gutterBottom>
-                Subnet JSON Editor
+                Subnets Editor
             </Typography>
 
             <RadioGroup
@@ -116,11 +148,9 @@ const SubnetsTextEditor: React.FC = () => {
                 value={text}
                 onChange={(e) => setText(e.target.value)}
             />
-
             <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
                 <Button variant="contained" onClick={handleUpdate}>Update</Button>
             </Stack>
-
             <Snackbar
                 open={error}
                 autoHideDuration={1500}
@@ -128,7 +158,7 @@ const SubnetsTextEditor: React.FC = () => {
                 anchorOrigin={{ vertical: "top", horizontal: "center" }}
             >
                 <Alert onClose={() => setError(false)} severity="error" sx={{ width: "100%" }}>
-                    Invalid format. Please correct the input.
+                    Invalid input format. Please check your data.
                 </Alert>
             </Snackbar>
         </Box>
