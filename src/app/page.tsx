@@ -11,8 +11,8 @@ import { RootState } from "@/store/store";
 import { setSubnets } from "@/store/subnetSlice";
 
 export default function Home() {
-    const [network, setNetwork] = useState("192.168.0.0");
-    const [mask, setMask] = useState(16);
+    const [network, setNetwork] = useState("10.100.8.0");
+    const [mask, setMask] = useState(21);
     const [showColumns, setShowColumns] = useState({
         subnetAddress: true,
         netmask: true,
