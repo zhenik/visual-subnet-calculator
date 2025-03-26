@@ -1,12 +1,14 @@
 "use client";
+
 import React, { useState } from "react";
 import { Checkbox, FormControlLabel, Typography, Container, Box } from "@mui/material";
 import { Address4 } from "ip-address";
 import SubnetTable from "@/components/SubnetTable";
 import SubnetInput from "@/components/SubnetInput";
-import {useDispatch, useSelector} from "react-redux";
-import {RootState} from "@/store/store";
-import {setSubnets} from "@/store/subnetSlice"; // ✅ Import SubnetInput
+import SubnetsTextEditor from "@/components/SubnetTextEditor";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/store/store";
+import { setSubnets } from "@/store/subnetSlice";
 
 export default function Home() {
     const [network, setNetwork] = useState("192.168.0.0");
@@ -24,12 +26,10 @@ export default function Home() {
     const subnets = useSelector((state: RootState) => state.subnets.subnets);
     const dispatch = useDispatch();
 
-    // Toggle visibility of table columns
     const toggleColumn = (column: keyof typeof showColumns) => {
         setShowColumns({ ...showColumns, [column]: !showColumns[column] });
     };
 
-    // Calculate subnets
     const calculateSubnet = () => {
         try {
             const ip = new Address4(`${network}/${mask}`);
@@ -53,11 +53,10 @@ export default function Home() {
         }
     };
 
-    // Reset to default values
     const handleReset = () => {
         setNetwork("192.168.0.0");
         setMask(16);
-        setSubnets([]);
+        dispatch(setSubnets([]));
     };
 
     return (
@@ -66,7 +65,7 @@ export default function Home() {
                 Visual Subnet Calculator
             </Typography>
 
-            {/* Subnet Input Component */}
+            {/* Subnet Input */}
             <SubnetInput
                 network={network}
                 mask={mask}
@@ -76,7 +75,7 @@ export default function Home() {
                 onReset={handleReset}
             />
 
-            {/* Column Visibility Checkboxes */}
+            {/* Column Toggles */}
             <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
                 {Object.keys(showColumns).map((key) => (
                     <FormControlLabel
@@ -87,13 +86,20 @@ export default function Home() {
                                 onChange={() => toggleColumn(key as keyof typeof showColumns)}
                             />
                         }
-                        label={key.charAt(0).toUpperCase() + key.slice(1)} // Capitalize first letter
+                        label={key.charAt(0).toUpperCase() + key.slice(1)}
                     />
                 ))}
             </Box>
 
-            {/* Subnet Table */}
-            <SubnetTable subnets={subnets} showColumns={showColumns} />
+            {/* Table + Editor in side-by-side layout */}
+            <Box sx={{ display: "flex", gap: 4, alignItems: "flex-start", mt: 2 }}>
+                <Box sx={{ flex: 2 }}>
+                    <SubnetTable subnets={subnets} showColumns={showColumns} />
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                    <SubnetsTextEditor />
+                </Box>
+            </Box>
         </Container>
     );
 }

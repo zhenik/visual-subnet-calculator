@@ -7,7 +7,6 @@ import {Table, TableHead, TableRow, TableCell, TableBody, Button, TextField} fro
 import { Address4 } from "ip-address";
 import { setSubnets, Subnet } from "@/store/subnetSlice";
 
-// Define the props interface for SubnetTable
 interface SubnetTableProps {
     subnets: Subnet[];
     showColumns: {
@@ -24,6 +23,18 @@ interface SubnetTableProps {
 
 const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
     const dispatch = useDispatch();
+
+    const [rowColors, setRowColors] = useState<{ [index: number]: string }>({});
+    const handleColorChange = (index: number, value: string) => {
+        setRowColors(prev => ({ ...prev, [index]: value }));
+
+        const updated = [...subnets];
+        updated[index] = {
+            ...updated[index],
+            color: value,
+        };
+        dispatch(setSubnets(updated));
+    };
 
     const [editedDescriptions, setEditedDescriptions] = useState<{ [index: number]: string }>({});
     const handleDescriptionChange = (index: number, value: string) => {
@@ -133,13 +144,21 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
                     {showColumns.useableIPs && <TableCell><strong>Usable IPs</strong></TableCell>}
                     {showColumns.hosts && <TableCell><strong>Hosts</strong></TableCell>}
                     {showColumns.description && <TableCell><strong>Description</strong></TableCell>}
+                    {showColumns.description && <TableCell><strong>Color</strong></TableCell>}
                     {showColumns.divide && <TableCell><strong>Divide</strong></TableCell>}
                     {showColumns.join && <TableCell><strong>Join</strong></TableCell>}
                 </TableRow>
             </TableHead>
             <TableBody>
                 {subnets.map((subnet, index) => (
-                    <TableRow key={index}>
+                    <TableRow
+                        key={index}
+                        sx={{
+                            backgroundColor: rowColors[index] ??
+                                subnet.color ??
+                                (subnet.description ? "#e8f5e9" : "inherit"), // ✅ default to light green if description exists
+                        }}
+                    >
                         {showColumns.subnetAddress && <TableCell>{subnet.cidr}</TableCell>}
                         {showColumns.netmask && <TableCell>{subnet.netmask}</TableCell>}
                         {showColumns.range && <TableCell>{subnet.range}</TableCell>}
@@ -152,6 +171,15 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
                                     value={editedDescriptions[index] ?? subnet.description ?? ""}
                                     onChange={(e) => handleDescriptionChange(index, e.target.value)}
                                     fullWidth
+                                />
+                            </TableCell>
+                        )}
+                        {showColumns.description && (
+                            <TableCell>
+                                <input
+                                    type="color"
+                                    value={rowColors[index] ?? subnet.color ?? "#ffffff"}
+                                    onChange={(e) => handleColorChange(index, e.target.value)}
                                 />
                             </TableCell>
                         )}
