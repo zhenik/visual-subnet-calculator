@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Checkbox, FormControlLabel, Typography, Container, Box } from "@mui/material";
+import Grid2 from "@mui/material/Grid2";
 import { Address4 } from "ip-address";
 import SubnetTable from "@/components/SubnetTable";
 import SubnetInput from "@/components/SubnetInput";
@@ -59,12 +60,9 @@ export default function Home() {
         dispatch(setSubnets([]));
     };
 
-    const setRootNetwork = (cidr: string) => {
-        const [addr, bits] = cidr.split("/");
-        if (addr && bits) {
-            setNetwork(addr);
-            setMask(Number(bits));
-        }
+    const setRootNetwork = (network: string, mask: number) => {
+        setNetwork(network);
+        setMask(mask);
     };
 
     return (

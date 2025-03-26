@@ -78,7 +78,6 @@ const SubnetsTextEditor: React.FC<SubnetsTextEditorProps> = ({ setRootNetwork })
     };
 
     const findCommonRoot = (cidrs: string[]): { network: string; mask: number } | null => {
-        // todo: Debug
         try {
             const ips = cidrs.map((c) => new Address4(c));
             const base = ips[0];
@@ -109,8 +108,8 @@ const SubnetsTextEditor: React.FC<SubnetsTextEditorProps> = ({ setRootNetwork })
             if (Array.isArray(parsed)) {
                 const cidrs = parsed.map((s) => s.cidr);
                 const root = findCommonRoot(cidrs);
-                console.log("Root: " + JSON.stringify(root));
                 if (root && setRootNetwork) {
+                    console.log("Root: " + JSON.stringify(root));
                     setRootNetwork(root.network, root.mask);
                 }
 
