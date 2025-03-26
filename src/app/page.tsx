@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Checkbox, FormControlLabel, Typography, Container, Box } from "@mui/material";
+import Grid2 from "@mui/material/Grid2";
 import { Address4 } from "ip-address";
 import SubnetTable from "@/components/SubnetTable";
 import SubnetInput from "@/components/SubnetInput";
-import SubnetsTextEditor from "@/components/SubnetTextEditor";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { setSubnets } from "@/store/subnetSlice";
+import SubnetsTextEditor from "@/components/SubnetsTextEditor";
 
 export default function Home() {
     const [network, setNetwork] = useState("192.168.0.0");
@@ -59,45 +60,48 @@ export default function Home() {
         dispatch(setSubnets([]));
     };
 
+    const setRootNetwork = (network: string, mask: number) => {
+        setNetwork(network);
+        setMask(mask);
+    };
+
     return (
         <Container sx={{ mt: 4 }}>
             <Typography variant="h4" sx={{ mb: 2 }}>
                 Visual Subnet Calculator
             </Typography>
 
-            {/* Subnet Input */}
-            <SubnetInput
-                network={network}
-                mask={mask}
-                setNetwork={setNetwork}
-                setMask={setMask}
-                onCalculate={calculateSubnet}
-                onReset={handleReset}
-            />
-
-            {/* Column Toggles */}
-            <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
-                {Object.keys(showColumns).map((key) => (
-                    <FormControlLabel
-                        key={key}
-                        control={
-                            <Checkbox
-                                checked={showColumns[key as keyof typeof showColumns]}
-                                onChange={() => toggleColumn(key as keyof typeof showColumns)}
-                            />
-                        }
-                        label={key.charAt(0).toUpperCase() + key.slice(1)}
+            <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 2 }}>
+                <Box sx={{ flex: 7 }}>
+                    <SubnetInput
+                        network={network}
+                        mask={mask}
+                        setNetwork={setNetwork}
+                        setMask={setMask}
+                        onCalculate={calculateSubnet}
+                        onReset={handleReset}
                     />
-                ))}
-            </Box>
 
-            {/* Table + Editor in side-by-side layout */}
-            <Box sx={{ display: "flex", gap: 4, alignItems: "flex-start", mt: 2 }}>
-                <Box sx={{ flex: 2 }}>
+                    <Box sx={{ display: "flex", gap: 1, mb: 2, flexWrap: "wrap" }}>
+                        {Object.keys(showColumns).map((key) => (
+                            <FormControlLabel
+                                key={key}
+                                control={
+                                    <Checkbox
+                                        checked={showColumns[key as keyof typeof showColumns]}
+                                        onChange={() => toggleColumn(key as keyof typeof showColumns)}
+                                    />
+                                }
+                                label={key.charAt(0).toUpperCase() + key.slice(1)}
+                            />
+                        ))}
+                    </Box>
+
                     <SubnetTable subnets={subnets} showColumns={showColumns} />
                 </Box>
-                <Box sx={{ flex: 1 }}>
-                    <SubnetsTextEditor />
+
+                <Box sx={{ flex: 5 }}>
+                    <SubnetsTextEditor setRootNetwork={setRootNetwork} />
                 </Box>
             </Box>
         </Container>
