@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Box, TextField, Typography, Snackbar, Alert } from "@mui/material";
+import { Box, TextField, Typography, Snackbar, Alert, Button, Stack } from "@mui/material";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/store/store";
 import { setSubnets } from "@/store/subnetSlice";
@@ -12,28 +12,20 @@ const SubnetsTextEditor: React.FC = () => {
     const [text, setText] = useState("");
     const [error, setError] = useState(false);
 
-    // Sync Redux state to editor
+    // Sync Redux state to editor initially
     useEffect(() => {
-        const reduced = subnets.map(({ cidr, description, color }) => ({ cidr, description, ...(color && { color }) }));
-        setText(JSON.stringify(reduced, null, 2));
+        setText(JSON.stringify(subnets.map(({ cidr, description, color }) => ({ cidr, description, color })), null, 2));
     }, [subnets]);
 
-    // Sync editor changes back to Redux
-    const handleChange = (value: string) => {
-        setText(value);
+    // Attempt to parse JSON and update Redux state
+    const handleUpdate = () => {
         try {
-            const parsed = JSON.parse(value);
+            const parsed = JSON.parse(text);
             if (Array.isArray(parsed)) {
-                const updatedSubnets = subnets.map((subnet, i) => ({
-                    ...subnet,
-                    cidr: parsed[i]?.cidr ?? subnet.cidr,
-                    description: parsed[i]?.description ?? subnet.description,
-                    color: parsed[i]?.color ?? subnet.color,
-                }));
-                dispatch(setSubnets(updatedSubnets));
+                // todo
+                dispatch(setSubnets(parsed));
                 setError(false);
             }
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (err) {
             setError(true);
         }
@@ -42,17 +34,21 @@ const SubnetsTextEditor: React.FC = () => {
     return (
         <Box sx={{ width: "100%" }}>
             <Typography variant="h6" gutterBottom>
-                Subnet CIDR, Description & Color
+                Subnet JSON Editor
             </Typography>
             <TextField
-                label="Subnets JSON (cidr, description, color)"
+                label="Subnets JSON"
                 multiline
                 rows={20}
                 fullWidth
                 variant="outlined"
                 value={text}
-                onChange={(e) => handleChange(e.target.value)}
+                onChange={(e) => setText(e.target.value)}
             />
+            <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+                <Button variant="contained" onClick={handleUpdate}>Update</Button>
+                <Button variant="outlined" disabled>Import</Button>
+            </Stack>
             <Snackbar
                 open={error}
                 autoHideDuration={1500}
