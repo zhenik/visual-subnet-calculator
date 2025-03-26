@@ -14,7 +14,7 @@ const SubnetsTextEditor: React.FC = () => {
 
     // Sync Redux state to editor
     useEffect(() => {
-        const reduced = subnets.map(({ cidr, description }) => ({ cidr, description }));
+        const reduced = subnets.map(({ cidr, description, color }) => ({ cidr, description, ...(color && { color }) }));
         setText(JSON.stringify(reduced, null, 2));
     }, [subnets]);
 
@@ -28,10 +28,12 @@ const SubnetsTextEditor: React.FC = () => {
                     ...subnet,
                     cidr: parsed[i]?.cidr ?? subnet.cidr,
                     description: parsed[i]?.description ?? subnet.description,
+                    color: parsed[i]?.color ?? subnet.color,
                 }));
                 dispatch(setSubnets(updatedSubnets));
                 setError(false);
             }
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (err) {
             setError(true);
         }
@@ -40,10 +42,10 @@ const SubnetsTextEditor: React.FC = () => {
     return (
         <Box sx={{ width: "100%" }}>
             <Typography variant="h6" gutterBottom>
-                Subnet CIDR & Description Editor
+                Subnet CIDR, Description & Color
             </Typography>
             <TextField
-                label="Subnets (CIDR & Description only)"
+                label="Subnets JSON (cidr, description, color)"
                 multiline
                 rows={20}
                 fullWidth
