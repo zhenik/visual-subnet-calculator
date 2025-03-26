@@ -5,6 +5,7 @@ import { Box, TextField, Typography, Snackbar, Alert, Button, Stack } from "@mui
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/store/store";
 import { setSubnets } from "@/store/subnetSlice";
+import { Address4 } from "ip-address";
 
 const SubnetsTextEditor: React.FC = () => {
     const dispatch = useDispatch();
@@ -17,13 +18,35 @@ const SubnetsTextEditor: React.FC = () => {
         setText(JSON.stringify(subnets.map(({ cidr, description, color }) => ({ cidr, description, color })), null, 2));
     }, [subnets]);
 
+    // Helper to calculate missing fields from CIDR
+    const enrichSubnet = (item: any) => {
+        try {
+            const ip = new Address4(item.cidr);
+            const firstUsable = ip.startAddress().bigInt() + BigInt(1);
+            const lastUsable = ip.endAddress().bigInt() - BigInt(1);
+            const hosts = Number(ip.endAddress().bigInt() - ip.startAddress().bigInt()) + 1;
+
+            return {
+                cidr: item.cidr,
+                description: item.description || "",
+                color: item.color,
+                netmask: ip.subnetMask.toString(),
+                range: `${ip.startAddress().correctForm()} - ${ip.endAddress().correctForm()}`,
+                useableIPs: `${Address4.fromBigInt(firstUsable).correctForm()} - ${Address4.fromBigInt(lastUsable).correctForm()}`,
+                hosts,
+            };
+        } catch {
+            return null;
+        }
+    };
+
     // Attempt to parse JSON and update Redux state
     const handleUpdate = () => {
         try {
             const parsed = JSON.parse(text);
             if (Array.isArray(parsed)) {
-                // todo
-                dispatch(setSubnets(parsed));
+                const enriched = parsed.map(enrichSubnet).filter((s): s is Exclude<typeof s, null> => s !== null);
+                dispatch(setSubnets(enriched));
                 setError(false);
             }
         } catch (err) {
