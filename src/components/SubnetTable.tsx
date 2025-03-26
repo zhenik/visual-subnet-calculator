@@ -123,7 +123,7 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
                     range: `${subnetObj.startAddress().correctForm()} - ${subnetObj.endAddress().correctForm()}`,
                     useableIPs: `${Address4.fromBigInt(firstUsableIP).correctForm()} - ${Address4.fromBigInt(lastUsableIP).correctForm()}`,
                     hosts: totalHosts,
-                    description: `Auto-generated subnet`,
+                    description: "",
                 };
             };
 
@@ -183,20 +183,46 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
                                 />
                             </TableCell>
                         )}
-                        {showColumns.divide && (
-                            <TableCell>
-                                <Button color="primary" onClick={() => divideSubnet(index)}>
-                                    Divide
-                                </Button>
-                            </TableCell>
-                        )}
-                        {showColumns.join && (
-                            <TableCell>
-                                <Button color="primary" onClick={() => joinSubnets(index)}>
-                                    Join
-                                </Button>
-                            </TableCell>
-                        )}
+                        {showColumns.divide && (() => {
+                            try {
+                                const subnet = new Address4(subnets[index].cidr);
+                                const currentMask = subnet.subnetMask;
+
+                                return currentMask < 32 ? (
+                                    <TableCell>
+                                        <Button color="primary" onClick={() => divideSubnet(index)}>
+                                            Divide
+                                        </Button>
+                                    </TableCell>
+                                ) : (
+                                    <TableCell />
+                                );
+                            } catch {
+                                return <TableCell />;
+                            }
+                        })()}
+                        {showColumns.join && index < subnets.length - 1 && (() => {
+                            try {
+                                const subnet1 = new Address4(subnets[index].cidr);
+                                const subnet2 = new Address4(subnets[index + 1].cidr);
+                                const nextSubnetStart = subnet1.endAddress().bigInt() + BigInt(1);
+                                const isJoinable =
+                                    subnet1.subnetMask === subnet2.subnetMask &&
+                                    Address4.fromBigInt(nextSubnetStart).correctForm() === subnet2.startAddress().correctForm();
+
+                                return isJoinable ? (
+                                    <TableCell>
+                                        <Button color="primary" onClick={() => joinSubnets(index)}>
+                                            Join
+                                        </Button>
+                                    </TableCell>
+                                ) : (
+                                    <TableCell />
+                                );
+                            } catch {
+                                return <TableCell />;
+                            }
+                        })()}
                     </TableRow>
                 ))}
             </TableBody>

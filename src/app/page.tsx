@@ -82,7 +82,9 @@ export default function Home() {
                     />
 
                     <Box sx={{ display: "flex", gap: 1, mb: 2, flexWrap: "wrap" }}>
-                        {Object.keys(showColumns).map((key) => (
+                        {Object.keys(showColumns)
+                            .filter((key) => key !== "divide" && key !== "join" && key !== "subnetAddress")
+                            .map((key) => (
                             <FormControlLabel
                                 key={key}
                                 control={
