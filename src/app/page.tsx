@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { Checkbox, FormControlLabel, Typography, Container, Box } from "@mui/material";
-import Grid2 from "@mui/material/Grid2";
 import { Address4 } from "ip-address";
 import SubnetTable from "@/components/SubnetTable";
 import SubnetInput from "@/components/SubnetInput";
