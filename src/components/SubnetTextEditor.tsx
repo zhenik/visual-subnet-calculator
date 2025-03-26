@@ -1,7 +1,18 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Box, TextField, Typography, Snackbar, Alert, Button, Stack } from "@mui/material";
+import {
+    Box,
+    TextField,
+    Typography,
+    Snackbar,
+    Alert,
+    Button,
+    Stack,
+    RadioGroup,
+    FormControlLabel,
+    Radio,
+} from "@mui/material";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/store/store";
 import { setSubnets } from "@/store/subnetSlice";
@@ -12,14 +23,22 @@ const SubnetsTextEditor: React.FC = () => {
     const subnets = useSelector((state: RootState) => state.subnets.subnets);
     const [text, setText] = useState("");
     const [error, setError] = useState(false);
+    const [format, setFormat] = useState<"json" | "text">("json");
 
     // Sync Redux state to editor initially
     useEffect(() => {
-        setText(JSON.stringify(subnets.map(({ cidr, description, color }) => ({ cidr, description, color })), null, 2));
-    }, [subnets]);
+        if (format === "json") {
+            setText(JSON.stringify(subnets.map(({ cidr, description, color }) => ({ cidr, description, color })), null, 2));
+        } else {
+            const textFormat = subnets
+                .map(({ cidr, description = "", color }) => `${cidr} ${description}${color ? ` ${color}` : ""}`.trim())
+                .join("\n");
+            setText(textFormat);
+        }
+    }, [subnets, format]);
 
     // Helper to calculate missing fields from CIDR
-    const enrichSubnet = (item: any) => {
+    const enrichSubnet = (item: { cidr: string; description?: string; color?: string }) => {
         try {
             const ip = new Address4(item.cidr);
             const firstUsable = ip.startAddress().bigInt() + BigInt(1);
@@ -40,13 +59,30 @@ const SubnetsTextEditor: React.FC = () => {
         }
     };
 
-    // Attempt to parse JSON and update Redux state
+    // Handle Update click
     const handleUpdate = () => {
         try {
-            const parsed = JSON.parse(text);
+            let parsed: any[] = [];
+
+            if (format === "json") {
+                parsed = JSON.parse(text);
+            } else {
+                parsed = text
+                    .split("\n")
+                    .map((line) => line.trim())
+                    .filter((line) => line)
+                    .map((line) => {
+                        const parts = line.split(" ");
+                        const cidr = parts[0];
+                        const color = parts.length > 2 && /^#/.test(parts[parts.length - 1]) ? parts.pop() : undefined;
+                        const description = parts.slice(1).join(" ");
+                        return { cidr, description, color };
+                    });
+            }
+
             if (Array.isArray(parsed)) {
-                const enriched = parsed.map(enrichSubnet).filter((s): s is Exclude<typeof s, null> => s !== null);
                 dispatch(setSubnets([])); // Reset before update
+                const enriched = parsed.map(enrichSubnet).filter((s): s is Exclude<typeof s, null> => s !== null);
                 dispatch(setSubnets(enriched));
                 setError(false);
             }
@@ -60,8 +96,19 @@ const SubnetsTextEditor: React.FC = () => {
             <Typography variant="h6" gutterBottom>
                 Subnet JSON Editor
             </Typography>
+
+            <RadioGroup
+                row
+                value={format}
+                onChange={(e) => setFormat(e.target.value as "json" | "text")}
+                sx={{ mb: 2 }}
+            >
+                <FormControlLabel value="json" control={<Radio />} label="JSON" />
+                <FormControlLabel value="text" control={<Radio />} label="Text" />
+            </RadioGroup>
+
             <TextField
-                label="Subnets JSON"
+                label="Subnets"
                 multiline
                 rows={20}
                 fullWidth
@@ -69,9 +116,11 @@ const SubnetsTextEditor: React.FC = () => {
                 value={text}
                 onChange={(e) => setText(e.target.value)}
             />
+
             <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                <Button variant="contained" onClick={handleUpdate}>Import</Button>
+                <Button variant="contained" onClick={handleUpdate}>Update</Button>
             </Stack>
+
             <Snackbar
                 open={error}
                 autoHideDuration={1500}
@@ -79,7 +128,7 @@ const SubnetsTextEditor: React.FC = () => {
                 anchorOrigin={{ vertical: "top", horizontal: "center" }}
             >
                 <Alert onClose={() => setError(false)} severity="error" sx={{ width: "100%" }}>
-                    Invalid JSON format. Please correct the input.
+                    Invalid format. Please correct the input.
                 </Alert>
             </Snackbar>
         </Box>
