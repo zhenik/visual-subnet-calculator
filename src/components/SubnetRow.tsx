@@ -42,14 +42,6 @@ const SubnetRow: React.FC<SubnetRowProps> = ({
                                                  color,
                                                  onColorChange,
                                              }) => {
-    const isJoinable = (subnet: Subnet) => {
-        try {
-            const s = new Address4(subnet.cidr);
-            return s.subnetMask > 0 && s.subnetMask < 32;
-        } catch {
-            return false;
-        }
-    };
 
     const isDividable = (subnet: Subnet) => {
         try {
@@ -99,19 +91,23 @@ const SubnetRow: React.FC<SubnetRowProps> = ({
                 </TableCell>
             )}
 
-            {showColumns.divide && isDividable(subnet) && (
+            {showColumns.divide && (
                 <TableCell>
-                    <Button color="primary" onClick={() => onDivide?.(index)}>
-                        Divide
-                    </Button>
+                    {isDividable(subnet) && (
+                        <Button color="primary" onClick={() => onDivide?.(index)}>
+                            Divide
+                        </Button>
+                    )}
                 </TableCell>
             )}
 
-            {showColumns.join && isJoinable(subnet) && (
+            {showColumns.join && (
                 <TableCell>
-                    <Button color="primary" onClick={() => onJoin?.(index)}>
-                        Join
-                    </Button>
+                    {subnet.isJoinable && (
+                        <Button color="primary" onClick={() => onJoin?.(index)}>
+                            Join
+                        </Button>
+                    )}
                 </TableCell>
             )}
         </TableRow>

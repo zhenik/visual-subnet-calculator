@@ -6,5 +6,6 @@ export interface Subnet {
     useableIPs: string;
     hosts: number;
     description?: string;
-    color?: string; // ✅ new field
+    isJoinable: boolean;
+    color?: string;
 }

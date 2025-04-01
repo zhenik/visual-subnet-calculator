@@ -57,6 +57,22 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
         dispatch(setSubnets(newSubnets));
     };
 
+    const calculateSubnetDetails = (subnetObj: Address4, isJoinable: boolean) => {
+        const firstUsableIP = subnetObj.startAddress().bigInt() + BigInt(1);
+        const lastUsableIP = subnetObj.endAddress().bigInt() - BigInt(1);
+        const totalHosts = Number(subnetObj.endAddress().bigInt() - subnetObj.startAddress().bigInt()) + 1;
+
+        return {
+            cidr: subnetObj.correctForm() + "/" + subnetObj.subnetMask,
+            netmask: subnetObj.subnetMask.toString(),
+            range: `${subnetObj.startAddress().correctForm()} - ${subnetObj.endAddress().correctForm()}`,
+            useableIPs: `${Address4.fromBigInt(firstUsableIP).correctForm()} - ${Address4.fromBigInt(lastUsableIP).correctForm()}`,
+            hosts: totalHosts,
+            description: "",
+            isJoinable: isJoinable
+        };
+    };
+
     // **Divide Subnet**
     const divideSubnet = (index: number) => {
         const subnet: Subnet = subnets[index];
@@ -80,23 +96,8 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
         const nextSubnetIp = Address4.fromBigInt(nextSubnetStart); // Convert BigInt to Address4
         const subnet2 = new Address4(`${nextSubnetIp.correctForm()}/${newMask}`);
 
-        const calculateSubnetDetails = (subnetObj: Address4) => {
-            const firstUsableIP = subnetObj.startAddress().bigInt() + BigInt(1);
-            const lastUsableIP = subnetObj.endAddress().bigInt() - BigInt(1);
-            const totalHosts = Number(subnetObj.endAddress().bigInt() - subnetObj.startAddress().bigInt()) + 1;
-
-            return {
-                cidr: subnetObj.correctForm() + "/" + subnetObj.subnetMask,
-                netmask: subnetObj.subnetMask.toString(),
-                range: `${subnetObj.startAddress().correctForm()} - ${subnetObj.endAddress().correctForm()}`,
-                useableIPs: `${Address4.fromBigInt(firstUsableIP).correctForm()} - ${Address4.fromBigInt(lastUsableIP).correctForm()}`,
-                hosts: totalHosts,
-                description: "",
-            };
-        };
-
         const newSubnets = [...subnets];
-        newSubnets.splice(index, 1, calculateSubnetDetails(subnet1), calculateSubnetDetails(subnet2));
+        newSubnets.splice(index, 1, calculateSubnetDetails(subnet1, true), calculateSubnetDetails(subnet2, false));
 
         dispatch(setSubnets([...newSubnets]));
     };
@@ -120,24 +121,8 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
             // Reduce mask by 1 to merge
             const newMask: number = subnet1.subnetMask - 1;
             const mergedSubnet = new Address4(`${subnet1.startAddress().correctForm()}/${newMask}`);
-
-            const calculateSubnetDetails = (subnetObj: Address4) => {
-                const firstUsableIP = subnetObj.startAddress().bigInt() + BigInt(1);
-                const lastUsableIP = subnetObj.endAddress().bigInt() - BigInt(1);
-                const totalHosts = Number(subnetObj.endAddress().bigInt() - subnetObj.startAddress().bigInt()) + 1;
-
-                return {
-                    cidr: subnetObj.correctForm() + "/" + subnetObj.subnetMask,
-                    netmask: subnetObj.subnetMask.toString(),
-                    range: `${subnetObj.startAddress().correctForm()} - ${subnetObj.endAddress().correctForm()}`,
-                    useableIPs: `${Address4.fromBigInt(firstUsableIP).correctForm()} - ${Address4.fromBigInt(lastUsableIP).correctForm()}`,
-                    hosts: totalHosts,
-                    description: "",
-                };
-            };
-
             const newSubnets = [...subnets];
-            newSubnets.splice(index, 2, calculateSubnetDetails(mergedSubnet));
+            newSubnets.splice(index, 2, calculateSubnetDetails(mergedSubnet, true));
 
             dispatch(setSubnets([...newSubnets]));
         }
@@ -171,8 +156,8 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
                         editedDescription={editedDescriptions[index]}
                         onDescriptionChange={handleDescriptionChange}
                         onDescriptionBlur={handleDescriptionBlur}
-                        color={rowColors[index]} // ✅ Pass color explicitly
-                        onColorChange={handleColorChange} // ✅ Handler for color change
+                        color={rowColors[index]}
+                        onColorChange={handleColorChange}
                     />
                 ))}
             </TableBody>
