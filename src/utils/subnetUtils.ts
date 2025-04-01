@@ -10,33 +10,58 @@ export function sortSubnetsByStartAddress(subnets: Subnet[]): Subnet[] {
 }
 
 export function completeWithMissingLeafPairs(subnets: Subnet[]): Subnet[] {
-    const enriched = [...subnets]; // Assume already enriched
-    const leafs = [...enriched].filter((s) => {
-        const ip = new Address4(s.cidr);
-        return ip.subnetMask > 0 && ip.subnetMask < 32;
-    });
+    const cidrSet = new Set(subnets.map((s) => s.cidr));
+    const completed: Subnet[] = [...subnets];
 
-    // Sort by start IP
-    leafs.sort((a, b) => {
-        const aStart = new Address4(a.cidr).startAddress().bigInt();
-        const bStart = new Address4(b.cidr).startAddress().bigInt();
-        return aStart < bStart ? -1 : aStart > bStart ? 1 : 0;
-    });
+    for (const subnet of subnets) {
+        const ip = new Address4(subnet.cidr);
+        const mask = ip.subnetMask;
 
-    // Check each pair
-    for (let i = 0; i < leafs.length - 1; i++) {
-        const current = new Address4(leafs[i].cidr);
-        const next = new Address4(leafs[i + 1].cidr);
+        // Skip if mask is /32 (can't divide further)
+        if (mask >= 32) continue;
 
-        const areAdjacent = current.endAddress().bigInt() + BigInt(1) === next.startAddress().bigInt();
-        const sameMask = current.subnetMask === next.subnetMask;
+        const increment = BigInt(2 ** (32 - mask));
+        const siblingStart = ip.startAddress().bigInt() + increment;
+        const siblingIp = Address4.fromBigInt(siblingStart);
+        const siblingCidr = `${siblingIp.correctForm()}/${mask}`;
 
-        if (areAdjacent && sameMask) {
-            leafs[i].isJoinable = true;
-            leafs[i + 1].isJoinable = true;
-        }
+        // Skip if sibling already exists
+        if (cidrSet.has(siblingCidr)) continue;
+
+        // Skip if sibling is a parent of another subnet
+        const isSiblingParent = subnets.some((s) => {
+            const sIp = new Address4(s.cidr);
+            return siblingIp.isInSubnet(sIp) && sIp.subnetMask > mask;
+        });
+        if (isSiblingParent) continue;
+
+        // Skip if original subnet is a child of another subnet (e.g. already subdivided)
+        const isSubnetChild = subnets.some((s) => {
+            const sIp = new Address4(s.cidr);
+            return sIp.isInSubnet(ip) && sIp.subnetMask < mask;
+        });
+        if (isSubnetChild) continue;
+
+        // ✅ Add sibling
+        const sibling = new Address4(siblingCidr);
+        const firstUsable = sibling.startAddress().bigInt() + BigInt(1);
+        const lastUsable = sibling.endAddress().bigInt() - BigInt(1);
+        const hosts = Number(sibling.endAddress().bigInt() - sibling.startAddress().bigInt()) + 1;
+
+        const newSubnet: Subnet = {
+            cidr: siblingCidr,
+            netmask: sibling.subnetMask.toString(),
+            range: `${sibling.startAddress().correctForm()} - ${sibling.endAddress().correctForm()}`,
+            useableIPs: `${Address4.fromBigInt(firstUsable).correctForm()} - ${Address4.fromBigInt(lastUsable).correctForm()}`,
+            hosts,
+            description: "",
+            color: "",
+            isJoinable: true,
+        };
+
+        completed.push(newSubnet);
+        cidrSet.add(siblingCidr);
     }
 
-    // console.log(enriched)
-    return enriched;
+    return sortSubnetsByStartAddress(completed);
 }

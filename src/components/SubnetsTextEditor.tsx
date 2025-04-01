@@ -17,7 +17,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/store/store";
 import { setSubnets } from "@/store/subnetSlice";
 import { Address4 } from "ip-address";
-import { sortSubnetsByStartAddress } from "@/utils/subnetUtils";
+import { completeWithMissingLeafPairs } from "@/utils/subnetUtils";
 
 interface SubnetsTextEditorProps {
     setRootNetwork?: (network: string, mask: number) => void;
@@ -62,7 +62,7 @@ const SubnetsTextEditor: React.FC<SubnetsTextEditorProps> = ({ setRootNetwork })
                 range: `${ip.startAddress().correctForm()} - ${ip.endAddress().correctForm()}`,
                 useableIPs: `${Address4.fromBigInt(firstUsable).correctForm()} - ${Address4.fromBigInt(lastUsable).correctForm()}`,
                 hosts,
-                isJoinable: false,
+                isJoinable: true,
             };
         } catch {
             return null;
@@ -114,20 +114,19 @@ const SubnetsTextEditor: React.FC<SubnetsTextEditorProps> = ({ setRootNetwork })
                 .map(enrichSubnet)
                 .filter((s): s is Exclude<ReturnType<typeof enrichSubnet>, null> => s !== null);
 
-            const sortedEnriched = sortSubnetsByStartAddress(enriched);
-            // const completedSubnets = completeWithMissingLeafPairs(sorted);
-            // const completedSubnets = buildSubnetTree(enriched);
-            console.log(sortedEnriched)
+            // const sortedEnriched = sortSubnetsByStartAddress(enriched);
+            const completedSubnets = completeWithMissingLeafPairs(enriched);
+            console.log(completedSubnets)
 
             // 3. Set root network if found
-            const cidrs = sortedEnriched.map(s => s.cidr);
+            const cidrs = completedSubnets.map(s => s.cidr);
             const root = findCommonRoot(cidrs);
             if (root && setRootNetwork) {
                 setRootNetwork(root.network, root.mask);
             }
 
             // 4. Dispatch to global state
-            dispatch(setSubnets(sortedEnriched));
+            dispatch(setSubnets(completedSubnets));
             setError(false);
         } catch {
             setError(true);
