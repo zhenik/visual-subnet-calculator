@@ -5,7 +5,8 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/store/store";
 import {Table, TableHead, TableRow, TableCell, TableBody, Button, TextField} from "@mui/material";
 import { Address4 } from "ip-address";
-import { setSubnets, Subnet } from "@/store/subnetSlice";
+import { setSubnets } from "@/store/subnetSlice";
+import { Subnet } from "@/types/subnet"
 import SubnetRow from "./SubnetRow";
 
 interface SubnetTableProps {
@@ -17,6 +18,7 @@ interface SubnetTableProps {
         useableIPs: boolean;
         hosts: boolean;
         description: boolean;
+        color: boolean;
         divide: boolean;
         join: boolean;
     };
@@ -151,25 +153,29 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
                     {showColumns.useableIPs && <TableCell><strong>Usable IPs</strong></TableCell>}
                     {showColumns.hosts && <TableCell><strong>Hosts</strong></TableCell>}
                     {showColumns.description && <TableCell><strong>Description</strong></TableCell>}
-                    {showColumns.description && <TableCell><strong>Color</strong></TableCell>}
+                    {showColumns.color && <TableCell><strong>Color</strong></TableCell>}
                     {showColumns.divide && <TableCell><strong>Divide</strong></TableCell>}
                     {showColumns.join && <TableCell><strong>Join</strong></TableCell>}
                 </TableRow>
             </TableHead>
-            {subnets.map((subnet, index) => (
-                <SubnetRow
-                    key={index}
-                    subnet={subnet}
-                    index={index}
-                    showColumns={showColumns}
-                    onDivide={divideSubnet}
-                    onJoin={joinSubnets}
-                    editableDescription
-                    editedDescription={editedDescriptions[index]}
-                    onDescriptionChange={handleDescriptionChange}
-                    onDescriptionBlur={handleDescriptionBlur}
-                />
-            ))}
+            <TableBody>
+                {subnets.map((subnet, index) => (
+                    <SubnetRow
+                        key={index}
+                        subnet={subnet}
+                        index={index}
+                        showColumns={showColumns}
+                        onDivide={divideSubnet}
+                        onJoin={joinSubnets}
+                        editableDescription
+                        editedDescription={editedDescriptions[index]}
+                        onDescriptionChange={handleDescriptionChange}
+                        onDescriptionBlur={handleDescriptionBlur}
+                        color={rowColors[index]} // ✅ Pass color explicitly
+                        onColorChange={handleColorChange} // ✅ Handler for color change
+                    />
+                ))}
+            </TableBody>
         </Table>
     );
 };
