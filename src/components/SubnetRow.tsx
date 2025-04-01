@@ -1,39 +1,47 @@
 import React from "react";
 import { TableRow, TableCell, Button, TextField } from "@mui/material";
 import { Address4 } from "ip-address";
-import { Subnet } from "@/store/subnetSlice";
+import { Subnet } from "@/types/subnet";
 
-interface Props {
-    subnet: Subnet;
-    index: number;
-    showColumns: Record<string, boolean>;
-    onDivide: (index: number) => void;
-    onJoin: (index: number) => void;
-    editableDescription?: boolean;
-    editedDescription?: string;
-    onDescriptionChange?: (index: number, value: string) => void;
-    onDescriptionBlur?: (index: number) => void;
+interface ShowColumns {
+    subnetAddress: boolean;
+    netmask: boolean;
+    range: boolean;
+    useableIPs: boolean;
+    hosts: boolean;
+    description: boolean;
+    color: boolean;
+    divide: boolean;
+    join: boolean;
 }
 
-const SubnetRow: React.FC<Props> = ({
-                                        subnet,
-                                        index,
-                                        showColumns,
-                                        onDivide,
-                                        onJoin,
-                                        editableDescription,
-                                        editedDescription,
-                                        onDescriptionChange,
-                                        onDescriptionBlur,
-                                    }) => {
-    const isJoinable = (subnet: Subnet) => {
-        try {
-            const s = new Address4(subnet.cidr);
-            return s.subnetMask > 0 && s.subnetMask < 32;
-        } catch {
-            return false;
-        }
-    };
+interface SubnetRowProps {
+    index: number;
+    subnet: Subnet;
+    showColumns: ShowColumns;
+    editedDescription?: string;
+    editableDescription?: boolean;
+    onDescriptionChange?: (index: number, value: string) => void;
+    onDescriptionBlur?: (index: number) => void;
+    onDivide?: (index: number) => void;
+    onJoin?: (index: number) => void;
+    color?: string;
+    onColorChange?: (index: number, value: string) => void;
+}
+
+const SubnetRow: React.FC<SubnetRowProps> = ({
+                                                 subnet,
+                                                 index,
+                                                 showColumns,
+                                                 onDivide,
+                                                 onJoin,
+                                                 editableDescription,
+                                                 editedDescription,
+                                                 onDescriptionChange,
+                                                 onDescriptionBlur,
+                                                 color,
+                                                 onColorChange,
+                                             }) => {
 
     const isDividable = (subnet: Subnet) => {
         try {
@@ -55,6 +63,7 @@ const SubnetRow: React.FC<Props> = ({
             {showColumns.range && <TableCell>{subnet.range}</TableCell>}
             {showColumns.useableIPs && <TableCell>{subnet.useableIPs}</TableCell>}
             {showColumns.hosts && <TableCell>{subnet.hosts}</TableCell>}
+
             {showColumns.description && (
                 <TableCell>
                     {editableDescription ? (
@@ -70,18 +79,35 @@ const SubnetRow: React.FC<Props> = ({
                     )}
                 </TableCell>
             )}
-            {showColumns.divide && isDividable(subnet) && (
+
+            {showColumns.color && (
                 <TableCell>
-                    <Button color="primary" onClick={() => onDivide(index)}>
-                        Divide
-                    </Button>
+                    <input
+                        type="color"
+                        value={color ?? subnet.color ?? "#ffffff"}
+                        onChange={(e) => onColorChange?.(index, e.target.value)}
+                        style={{ width: "100%", border: "none", background: "transparent", cursor: "pointer" }}
+                    />
                 </TableCell>
             )}
-            {showColumns.join && isJoinable(subnet) && (
+
+            {showColumns.divide && (
                 <TableCell>
-                    <Button color="primary" onClick={() => onJoin(index)}>
-                        Join
-                    </Button>
+                    {isDividable(subnet) && (
+                        <Button color="primary" onClick={() => onDivide?.(index)}>
+                            Divide
+                        </Button>
+                    )}
+                </TableCell>
+            )}
+
+            {showColumns.join && (
+                <TableCell>
+                    {subnet.isJoinable && (
+                        <Button color="primary" onClick={() => onJoin?.(index)}>
+                            Join
+                        </Button>
+                    )}
                 </TableCell>
             )}
         </TableRow>

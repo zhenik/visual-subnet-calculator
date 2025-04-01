@@ -5,7 +5,8 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/store/store";
 import {Table, TableHead, TableRow, TableCell, TableBody, Button, TextField} from "@mui/material";
 import { Address4 } from "ip-address";
-import { setSubnets, Subnet } from "@/store/subnetSlice";
+import { setSubnets } from "@/store/subnetSlice";
+import { Subnet } from "@/types/subnet"
 import SubnetRow from "./SubnetRow";
 
 interface SubnetTableProps {
@@ -17,6 +18,7 @@ interface SubnetTableProps {
         useableIPs: boolean;
         hosts: boolean;
         description: boolean;
+        color: boolean;
         divide: boolean;
         join: boolean;
     };
@@ -55,6 +57,22 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
         dispatch(setSubnets(newSubnets));
     };
 
+    const calculateSubnetDetails = (subnetObj: Address4, isJoinable: boolean) => {
+        const firstUsableIP = subnetObj.startAddress().bigInt() + BigInt(1);
+        const lastUsableIP = subnetObj.endAddress().bigInt() - BigInt(1);
+        const totalHosts = Number(subnetObj.endAddress().bigInt() - subnetObj.startAddress().bigInt()) + 1;
+
+        return {
+            cidr: subnetObj.correctForm() + "/" + subnetObj.subnetMask,
+            netmask: subnetObj.subnetMask.toString(),
+            range: `${subnetObj.startAddress().correctForm()} - ${subnetObj.endAddress().correctForm()}`,
+            useableIPs: `${Address4.fromBigInt(firstUsableIP).correctForm()} - ${Address4.fromBigInt(lastUsableIP).correctForm()}`,
+            hosts: totalHosts,
+            description: "",
+            isJoinable: isJoinable
+        };
+    };
+
     // **Divide Subnet**
     const divideSubnet = (index: number) => {
         const subnet: Subnet = subnets[index];
@@ -78,23 +96,8 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
         const nextSubnetIp = Address4.fromBigInt(nextSubnetStart); // Convert BigInt to Address4
         const subnet2 = new Address4(`${nextSubnetIp.correctForm()}/${newMask}`);
 
-        const calculateSubnetDetails = (subnetObj: Address4) => {
-            const firstUsableIP = subnetObj.startAddress().bigInt() + BigInt(1);
-            const lastUsableIP = subnetObj.endAddress().bigInt() - BigInt(1);
-            const totalHosts = Number(subnetObj.endAddress().bigInt() - subnetObj.startAddress().bigInt()) + 1;
-
-            return {
-                cidr: subnetObj.correctForm() + "/" + subnetObj.subnetMask,
-                netmask: subnetObj.subnetMask.toString(),
-                range: `${subnetObj.startAddress().correctForm()} - ${subnetObj.endAddress().correctForm()}`,
-                useableIPs: `${Address4.fromBigInt(firstUsableIP).correctForm()} - ${Address4.fromBigInt(lastUsableIP).correctForm()}`,
-                hosts: totalHosts,
-                description: "",
-            };
-        };
-
         const newSubnets = [...subnets];
-        newSubnets.splice(index, 1, calculateSubnetDetails(subnet1), calculateSubnetDetails(subnet2));
+        newSubnets.splice(index, 1, calculateSubnetDetails(subnet1, true), calculateSubnetDetails(subnet2, false));
 
         dispatch(setSubnets([...newSubnets]));
     };
@@ -118,24 +121,8 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
             // Reduce mask by 1 to merge
             const newMask: number = subnet1.subnetMask - 1;
             const mergedSubnet = new Address4(`${subnet1.startAddress().correctForm()}/${newMask}`);
-
-            const calculateSubnetDetails = (subnetObj: Address4) => {
-                const firstUsableIP = subnetObj.startAddress().bigInt() + BigInt(1);
-                const lastUsableIP = subnetObj.endAddress().bigInt() - BigInt(1);
-                const totalHosts = Number(subnetObj.endAddress().bigInt() - subnetObj.startAddress().bigInt()) + 1;
-
-                return {
-                    cidr: subnetObj.correctForm() + "/" + subnetObj.subnetMask,
-                    netmask: subnetObj.subnetMask.toString(),
-                    range: `${subnetObj.startAddress().correctForm()} - ${subnetObj.endAddress().correctForm()}`,
-                    useableIPs: `${Address4.fromBigInt(firstUsableIP).correctForm()} - ${Address4.fromBigInt(lastUsableIP).correctForm()}`,
-                    hosts: totalHosts,
-                    description: "",
-                };
-            };
-
             const newSubnets = [...subnets];
-            newSubnets.splice(index, 2, calculateSubnetDetails(mergedSubnet));
+            newSubnets.splice(index, 2, calculateSubnetDetails(mergedSubnet, true));
 
             dispatch(setSubnets([...newSubnets]));
         }
@@ -151,25 +138,29 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
                     {showColumns.useableIPs && <TableCell><strong>Usable IPs</strong></TableCell>}
                     {showColumns.hosts && <TableCell><strong>Hosts</strong></TableCell>}
                     {showColumns.description && <TableCell><strong>Description</strong></TableCell>}
-                    {showColumns.description && <TableCell><strong>Color</strong></TableCell>}
+                    {showColumns.color && <TableCell><strong>Color</strong></TableCell>}
                     {showColumns.divide && <TableCell><strong>Divide</strong></TableCell>}
                     {showColumns.join && <TableCell><strong>Join</strong></TableCell>}
                 </TableRow>
             </TableHead>
-            {subnets.map((subnet, index) => (
-                <SubnetRow
-                    key={index}
-                    subnet={subnet}
-                    index={index}
-                    showColumns={showColumns}
-                    onDivide={divideSubnet}
-                    onJoin={joinSubnets}
-                    editableDescription
-                    editedDescription={editedDescriptions[index]}
-                    onDescriptionChange={handleDescriptionChange}
-                    onDescriptionBlur={handleDescriptionBlur}
-                />
-            ))}
+            <TableBody>
+                {subnets.map((subnet, index) => (
+                    <SubnetRow
+                        key={index}
+                        subnet={subnet}
+                        index={index}
+                        showColumns={showColumns}
+                        onDivide={divideSubnet}
+                        onJoin={joinSubnets}
+                        editableDescription
+                        editedDescription={editedDescriptions[index]}
+                        onDescriptionChange={handleDescriptionChange}
+                        onDescriptionBlur={handleDescriptionBlur}
+                        color={rowColors[index]}
+                        onColorChange={handleColorChange}
+                    />
+                ))}
+            </TableBody>
         </Table>
     );
 };

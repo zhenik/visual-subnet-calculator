@@ -17,6 +17,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/store/store";
 import { setSubnets } from "@/store/subnetSlice";
 import { Address4 } from "ip-address";
+import { completeWithMissingLeafPairs } from "@/utils/subnetUtils";
 
 interface SubnetsTextEditorProps {
     setRootNetwork?: (network: string, mask: number) => void;
@@ -61,6 +62,7 @@ const SubnetsTextEditor: React.FC<SubnetsTextEditorProps> = ({ setRootNetwork })
                 range: `${ip.startAddress().correctForm()} - ${ip.endAddress().correctForm()}`,
                 useableIPs: `${Address4.fromBigInt(firstUsable).correctForm()} - ${Address4.fromBigInt(lastUsable).correctForm()}`,
                 hosts,
+                isJoinable: true,
             };
         } catch {
             return null;
@@ -98,29 +100,41 @@ const SubnetsTextEditor: React.FC<SubnetsTextEditorProps> = ({ setRootNetwork })
 
     const handleUpdate = () => {
         try {
-            let parsed: any[] = [];
+            let parsed: { cidr: string; description?: string; color?: string }[] = [];
+
+            // 1. Parse based on format
             if (format === "json") {
                 parsed = JSON.parse(text);
             } else {
                 parsed = parseTextFormat(text);
             }
 
-            if (Array.isArray(parsed)) {
-                const cidrs = parsed.map((s) => s.cidr);
-                const root = findCommonRoot(cidrs);
-                if (root && setRootNetwork) {
-                    console.log("Root: " + JSON.stringify(root));
-                    setRootNetwork(root.network, root.mask);
-                }
+            // 2. Enrich
+            const enriched = parsed
+                .map(enrichSubnet)
+                .filter((s): s is Exclude<ReturnType<typeof enrichSubnet>, null> => s !== null);
 
-                const enriched = parsed.map(enrichSubnet).filter((s): s is Exclude<typeof s, null> => s !== null);
-                dispatch(setSubnets(enriched));
-                setError(false);
+            // const sortedEnriched = sortSubnetsByStartAddress(enriched);
+            const completedSubnets = completeWithMissingLeafPairs(enriched);
+            console.log(completedSubnets)
+
+            // 3. Set root network if found
+            const cidrs = completedSubnets.map(s => s.cidr);
+            const root = findCommonRoot(cidrs);
+            if (root && setRootNetwork) {
+                setRootNetwork(root.network, root.mask);
             }
-        } catch (err) {
+
+            // 4. Dispatch to global state
+            dispatch(setSubnets(completedSubnets));
+            setError(false);
+        } catch {
             setError(true);
         }
     };
+
+
+
 
     return (
         <Box sx={{ width: "100%" }}>
