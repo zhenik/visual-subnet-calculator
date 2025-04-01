@@ -6,6 +6,7 @@ import { RootState } from "@/store/store";
 import {Table, TableHead, TableRow, TableCell, TableBody, Button, TextField} from "@mui/material";
 import { Address4 } from "ip-address";
 import { setSubnets, Subnet } from "@/store/subnetSlice";
+import SubnetRow from "./SubnetRow";
 
 interface SubnetTableProps {
     subnets: Subnet[];
@@ -45,6 +46,12 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
             ...newSubnets[index],
             description: value,
         };
+        dispatch(setSubnets(newSubnets));
+    };
+
+    const handleDescriptionBlur = (index: number) => {
+        const newSubnets = [...subnets];
+        newSubnets[index].description = editedDescriptions[index];
         dispatch(setSubnets(newSubnets));
     };
 
@@ -149,83 +156,20 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
                     {showColumns.join && <TableCell><strong>Join</strong></TableCell>}
                 </TableRow>
             </TableHead>
-            <TableBody>
-                {subnets.map((subnet, index) => (
-                    <TableRow
-                        key={index}
-                        sx={{
-                            backgroundColor: rowColors[index] ??
-                                subnet.color ??
-                                (subnet.description ? "#e8f5e9" : "inherit"), // ✅ default to light green if description exists
-                        }}
-                    >
-                        {showColumns.subnetAddress && <TableCell>{subnet.cidr}</TableCell>}
-                        {showColumns.netmask && <TableCell>{subnet.netmask}</TableCell>}
-                        {showColumns.range && <TableCell>{subnet.range}</TableCell>}
-                        {showColumns.useableIPs && <TableCell>{subnet.useableIPs}</TableCell>}
-                        {showColumns.hosts && <TableCell>{subnet.hosts}</TableCell>}
-                        {showColumns.description && (
-                            <TableCell>
-                                <TextField
-                                    variant="standard"
-                                    value={editedDescriptions[index] ?? subnet.description ?? ""}
-                                    onChange={(e) => handleDescriptionChange(index, e.target.value)}
-                                    fullWidth
-                                />
-                            </TableCell>
-                        )}
-                        {showColumns.description && (
-                            <TableCell>
-                                <input
-                                    type="color"
-                                    value={rowColors[index] ?? subnet.color ?? "#ffffff"}
-                                    onChange={(e) => handleColorChange(index, e.target.value)}
-                                />
-                            </TableCell>
-                        )}
-                        {showColumns.divide && (() => {
-                            try {
-                                const subnet = new Address4(subnets[index].cidr);
-                                const currentMask = subnet.subnetMask;
-
-                                return currentMask < 32 ? (
-                                    <TableCell>
-                                        <Button color="primary" onClick={() => divideSubnet(index)}>
-                                            Divide
-                                        </Button>
-                                    </TableCell>
-                                ) : (
-                                    <TableCell />
-                                );
-                            } catch {
-                                return <TableCell />;
-                            }
-                        })()}
-                        {showColumns.join && index < subnets.length - 1 && (() => {
-                            try {
-                                const subnet1 = new Address4(subnets[index].cidr);
-                                const subnet2 = new Address4(subnets[index + 1].cidr);
-                                const nextSubnetStart = subnet1.endAddress().bigInt() + BigInt(1);
-                                const isJoinable =
-                                    subnet1.subnetMask === subnet2.subnetMask &&
-                                    Address4.fromBigInt(nextSubnetStart).correctForm() === subnet2.startAddress().correctForm();
-
-                                return isJoinable ? (
-                                    <TableCell>
-                                        <Button color="primary" onClick={() => joinSubnets(index)}>
-                                            Join
-                                        </Button>
-                                    </TableCell>
-                                ) : (
-                                    <TableCell />
-                                );
-                            } catch {
-                                return <TableCell />;
-                            }
-                        })()}
-                    </TableRow>
-                ))}
-            </TableBody>
+            {subnets.map((subnet, index) => (
+                <SubnetRow
+                    key={index}
+                    subnet={subnet}
+                    index={index}
+                    showColumns={showColumns}
+                    onDivide={divideSubnet}
+                    onJoin={joinSubnets}
+                    editableDescription
+                    editedDescription={editedDescriptions[index]}
+                    onDescriptionChange={handleDescriptionChange}
+                    onDescriptionBlur={handleDescriptionBlur}
+                />
+            ))}
         </Table>
     );
 };

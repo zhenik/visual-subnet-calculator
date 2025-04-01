@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Checkbox, FormControlLabel, Typography, Container, Box } from "@mui/material";
+import React, { useState } from "react";
+import { Typography, Container, Box } from "@mui/material";
 import { Address4 } from "ip-address";
 import SubnetTable from "@/components/SubnetTable";
 import SubnetInput from "@/components/SubnetInput";
@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { setSubnets } from "@/store/subnetSlice";
 import SubnetsTextEditor from "@/components/SubnetsTextEditor";
+import ColumnToggles from "@/components/ColumnToggles";
 
 export default function Home() {
     const [network, setNetwork] = useState("192.168.0.0");
@@ -81,22 +82,7 @@ export default function Home() {
                         onReset={handleReset}
                     />
 
-                    <Box sx={{ display: "flex", gap: 1, mb: 2, flexWrap: "wrap" }}>
-                        {Object.keys(showColumns)
-                            .filter((key) => key !== "divide" && key !== "join" && key !== "subnetAddress")
-                            .map((key) => (
-                            <FormControlLabel
-                                key={key}
-                                control={
-                                    <Checkbox
-                                        checked={showColumns[key as keyof typeof showColumns]}
-                                        onChange={() => toggleColumn(key as keyof typeof showColumns)}
-                                    />
-                                }
-                                label={key.charAt(0).toUpperCase() + key.slice(1)}
-                            />
-                        ))}
-                    </Box>
+                    <ColumnToggles showColumns={showColumns} toggleColumn={toggleColumn} />
 
                     <SubnetTable subnets={subnets} showColumns={showColumns} />
                 </Box>
