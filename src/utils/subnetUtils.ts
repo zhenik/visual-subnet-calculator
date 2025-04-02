@@ -9,15 +9,14 @@ export function sortSubnetsByStartAddress(subnets: Subnet[]): Subnet[] {
     });
 }
 
-export function completeWithMissingLeafPairs(subnets: Subnet[]): Subnet[] {
+// todo: test these two func
+export function addMissingLeafSiblings(subnets: Subnet[]): Subnet[] {
     const cidrSet = new Set(subnets.map((s) => s.cidr));
     const completed: Subnet[] = [...subnets];
 
     for (const subnet of subnets) {
         const ip = new Address4(subnet.cidr);
         const mask = ip.subnetMask;
-
-        // Skip if mask is /32 (can't divide further)
         if (mask >= 32) continue;
 
         const increment = BigInt(2 ** (32 - mask));
@@ -25,24 +24,22 @@ export function completeWithMissingLeafPairs(subnets: Subnet[]): Subnet[] {
         const siblingIp = Address4.fromBigInt(siblingStart);
         const siblingCidr = `${siblingIp.correctForm()}/${mask}`;
 
-        // Skip if sibling already exists
         if (cidrSet.has(siblingCidr)) continue;
 
-        // Skip if sibling is a parent of another subnet
         const isSiblingParent = subnets.some((s) => {
-            const sIp = new Address4(s.cidr);
-            return siblingIp.isInSubnet(sIp) && sIp.subnetMask > mask;
+            const sIP = new Address4(s.cidr);
+            return siblingIp.isInSubnet(sIP) && sIP.subnetMask > mask;
         });
+
         if (isSiblingParent) continue;
 
-        // Skip if original subnet is a child of another subnet (e.g. already subdivided)
-        const isSubnetChild = subnets.some((s) => {
-            const sIp = new Address4(s.cidr);
-            return sIp.isInSubnet(ip) && sIp.subnetMask < mask;
+        const isCoveredByChildren = subnets.some((s) => {
+            const sIP = new Address4(s.cidr);
+            return sIP.isInSubnet(siblingIp) && sIP.subnetMask > mask;
         });
-        if (isSubnetChild) continue;
 
-        // ✅ Add sibling
+        if (isCoveredByChildren) continue;
+
         const sibling = new Address4(siblingCidr);
         const firstUsable = sibling.startAddress().bigInt() + BigInt(1);
         const lastUsable = sibling.endAddress().bigInt() - BigInt(1);
@@ -64,4 +61,23 @@ export function completeWithMissingLeafPairs(subnets: Subnet[]): Subnet[] {
     }
 
     return sortSubnetsByStartAddress(completed);
+}
+
+export function filterLeafSubnets(cidrs: string[]): string[] {
+    return cidrs.filter((candidate) => {
+        const candidateAddr = new Address4(candidate);
+
+        return !cidrs.some((other) => {
+            if (other === candidate) return false;
+            const otherAddr = new Address4(other);
+            // Only exclude candidate if it contains a more specific subnet
+            return candidateAddr.isInSubnet(otherAddr) && otherAddr.subnetMask > candidateAddr.subnetMask;
+        });
+    });
+}
+
+
+// Tree node that contains children
+export interface SubnetNode extends Subnet {
+    children: SubnetNode[];
 }
