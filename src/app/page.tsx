@@ -21,6 +21,7 @@ export default function Home() {
         useableIPs: true,
         hosts: true,
         description: true,
+        color: true,
         divide: true,
         join: true,
     });

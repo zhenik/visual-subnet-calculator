@@ -13,6 +13,8 @@ interface Props {
     editedDescription?: string;
     onDescriptionChange?: (index: number, value: string) => void;
     onDescriptionBlur?: (index: number) => void;
+    editedColor?: string;
+    onColorChange? : (index: number, value: string) => void;
 }
 
 const SubnetRow: React.FC<Props> = ({
@@ -25,6 +27,8 @@ const SubnetRow: React.FC<Props> = ({
                                         editedDescription,
                                         onDescriptionChange,
                                         onDescriptionBlur,
+                                        editedColor,
+                                        onColorChange
                                     }) => {
     const isJoinable = (subnet: Subnet) => {
         try {
@@ -68,6 +72,16 @@ const SubnetRow: React.FC<Props> = ({
                     ) : (
                         subnet.description
                     )}
+                </TableCell>
+            )}
+            {showColumns.color && (
+                <TableCell>
+                    <input
+                        type="color"
+                        value={editedColor ?? subnet.color ?? "#ffffff"}
+                        onChange={(e) => onColorChange?.(index, e.target.value)}
+                        style={{ width: "100%", border: "none", background: "transparent" }}
+                    />
                 </TableCell>
             )}
             {showColumns.divide && isDividable(subnet) && (
