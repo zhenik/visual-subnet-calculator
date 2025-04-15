@@ -10,6 +10,7 @@ type ColumnKey =
     | "useableIPs"
     | "hosts"
     | "description"
+    | "color"
     | "divide"
     | "join";
 
