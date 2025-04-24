@@ -1,8 +1,21 @@
 @import "tailwindcss";
 
 :root {
+	/* Color scheme */
 	--background: #ffffff;
 	--foreground: #171717;
+	--primary-dark: #2a2a2e;
+	--secondary-dark: rgba(0, 0, 0, 0.23);
+	--tertiary-dark: rgba(0, 0, 0, 0.23);
+	--primary-light: #daddd0;
+	--secondary-light: #cdd0c1;
+
+	/* Font sizes */
+	--font-size-small: 0.7rem;
+	--font-size-base: 0.8rem;
+	--font-size-lg: 1rem;
+	--font-size-xl: 1.4rem;
+	--font-size-2xl: 2.125rem;
 }
 
 @media (prefers-color-scheme: dark) {
