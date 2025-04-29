@@ -51,9 +51,9 @@ const SubnetRow: React.FC<Props> = ({
 	return (
 		<TableRow
 			sx={{
-				backgroundColor:
-					subnet.color ??
-					(subnet.description ? "#e5fbe5" : "transparent"),
+				// backgroundColor:
+				// 	subnet.color ??
+				// 	(subnet.description ? "#e5fbe5" : "transparent"),
 				"& td": {
 					borderBottom: "1px solid var(--secondary-dark)",
 					borderRight: "1px solid var(--secondary-dark)",
@@ -99,7 +99,12 @@ const SubnetRow: React.FC<Props> = ({
 						style={{
 							width: "100%",
 							border: "none",
-							background: "transparent",
+							backgroundColor:
+								subnet.color ??
+								(subnet.description
+									? "#e5fbe5"
+									: "transparent"),
+							// background: "transparent",
 						}}
 					/>
 				</TableCell>
