@@ -189,8 +189,8 @@ const SubnetsTextEditor: React.FC<SubnetsTextEditorProps> = ({
 				value={format}
 				onChange={(e) => setFormat(e.target.value as "json" | "text")}
 				sx={{
-					mb: 2,
 					pl: 4,
+					mt: "56px",
 					"& .MuiRadio-root": {
 						color: "var(--primary-light)",
 					},

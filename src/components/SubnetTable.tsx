@@ -189,7 +189,7 @@ const SubnetTable: React.FC<SubnetTableProps> = ({ subnets, showColumns }) => {
 	return (
 		<Table
 			sx={{
-				mt: 4,
+				mt: 2,
 				border: "1px solid var(--secondary-dark)",
 				width: "100%",
 			}}
