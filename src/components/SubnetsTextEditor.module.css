@@ -1,0 +1,8 @@
+.horizontal_line_light {
+	display: flex;
+	height: 1px;
+	margin-bottom: 1rem;
+	width: 100%;
+	background-color: var(--primary-light);
+	opacity: 0.5;
+}
